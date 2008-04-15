@@ -489,6 +489,10 @@ SWFUpload.prototype.setDebugEnabled = function (debugEnabled) {
 };
 
 
+SWFUpload.prototype.loadPolicyFile = function (url) {
+	this.callFlash("LoadPolicyFile", false, [url]);
+}
+
 /* *******************************
 	Flash Event Interfaces
 	These functions are used by Flash to trigger the various

@@ -51,6 +51,10 @@
   <rslPaths>
     <!-- example: <element path="..." /> -->
   </rslPaths>
+  <!-- Intrinsic Libraries -->
+  <intrinsics>
+    <!-- example: <element path="..." /> -->
+  </intrinsics>
   <!-- Assets to embed into the output SWF -->
   <library>
     <!-- example: <asset path="..." id="..." update="..." glyphs="..." mode="..." place="..." sharepoint="..." /> -->

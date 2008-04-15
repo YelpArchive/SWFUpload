@@ -108,7 +108,7 @@ package {
 			}
 
 			
-			Security.allowDomain("*");	// Allow uploading to any domain
+			//Security.allowDomain("*");	// Allow uploading to any domain
 			
 			// Keep Flash Player busy so it doesn't show the "flash script is running slowly" error
 			var counter:Number = 0;
@@ -233,6 +233,9 @@ package {
 				ExternalInterface.addCallback("SetUseQueryString", this.SetUseQueryString);
 				ExternalInterface.addCallback("SetRequeueOnError", this.SetRequeueOnError);
 				ExternalInterface.addCallback("SetDebugEnabled", this.SetDebugEnabled);
+				
+				// Testing the loadPolicy function (the idea is that it will allow us to better support SSL)
+				ExternalInterface.addCallback("LoadPolicyFile", this.LoadPolicyFile);
 			} catch (ex:Error) {
 				this.Debug("Callbacks where not set.");
 				return;
@@ -682,6 +685,10 @@ package {
 		
 		private function SetDebugEnabled(debug_enabled:Boolean):void {
 			this.debugEnabled = debug_enabled;
+		}
+		
+		private function LoadPolicyFile(url:String):void {
+			Security.loadPolicyFile(url);
 		}
 		
 		/* *************************************************************

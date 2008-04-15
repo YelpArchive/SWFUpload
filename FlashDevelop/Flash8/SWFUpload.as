@@ -26,7 +26,7 @@ class SWFUpload {
 		var SWFUpload:SWFUpload = new SWFUpload();
 	}
 	
-	private var build_number:String = "SWFUPLOAD 2.1.0 FP8 2008-03-13";
+	private var build_number:String = "SWFUPLOAD 2.1.0 FP8 2008-04-15 loadPolicyFile test";
 
 	// State tracking variables
 	private var fileBrowserMany:FileReferenceList = new FileReferenceList();
@@ -232,6 +232,9 @@ class SWFUpload {
 			ExternalInterface.addCallback("SetUseQueryString", this, this.SetUseQueryString);
 			ExternalInterface.addCallback("SetRequeueOnError", this, this.SetRequeueOnError);
 			ExternalInterface.addCallback("SetDebugEnabled", this, this.SetDebugEnabled);
+
+			ExternalInterface.addCallback("LoadPolicyFile", this, this.LoadPolicyFile);
+			
 		} catch (ex:Error) {
 			this.Debug("Callbacks where not set.");
 			return;
@@ -680,6 +683,10 @@ class SWFUpload {
 
 	private function SetDebugEnabled(debug_enabled:Boolean):Void {
 		this.debugEnabled = debug_enabled;
+	}
+
+	private function LoadPolicyFile(url:String):Void {
+		System.security.loadPolicyFile(url);
 	}
 	
 	/* *************************************************************
