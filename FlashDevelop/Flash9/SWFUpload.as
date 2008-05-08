@@ -103,7 +103,7 @@ package {
 		public function SWFUpload() {
 			// Do the feature detection.  Make sure this version of Flash supports the features we need. If not
 			// abort initialization.
-			if (!flash.net.FileReferenceList || !flash.net.FileReference || !flash.net.URLRequest || !flash.external.ExternalInterface || !flash.external.ExternalInterface.available || !DataEvent.UPLOAD_COMPLETE_DATA) {
+			if (!flash.net.FileReferenceList || !flash.net.FileReference || !flash.net.URLRequest || !flash.external.ExternalInterface || !flash.external.ExternalInterface.available || !flash.net.URLRequestMethod) {
 				return;
 			}
 
@@ -262,12 +262,12 @@ package {
 			ExternalCall.UploadProgress(this.uploadProgress_Callback, this.current_file_item.ToJavaScriptObject(), event.bytesLoaded, event.bytesTotal);
 		}
 
-		private function ServerData_Handler(event:DataEvent):void {
+		private function ServerData_Handler(event:Event):void {
 			this.successful_uploads++;
 			this.current_file_item.file_status = FileItem.FILE_STATUS_SUCCESS;
 
-			this.Debug("Event: uploadSuccess: File ID: " + this.current_file_item.id + " Data: " + event.data);
-			ExternalCall.UploadSuccess(this.uploadSuccess_Callback, this.current_file_item.ToJavaScriptObject(), event.data);
+			this.Debug("Event: uploadSuccess: File ID: " + this.current_file_item.id + " Data: n/a");
+			ExternalCall.UploadSuccess(this.uploadSuccess_Callback, this.current_file_item.ToJavaScriptObject(), null);
 
 			this.UploadComplete(false);
 			
@@ -752,7 +752,7 @@ package {
 					this.current_file_item.file_reference.addEventListener(IOErrorEvent.IO_ERROR, this.IOError_Handler);
 					this.current_file_item.file_reference.addEventListener(SecurityErrorEvent.SECURITY_ERROR, this.SecurityError_Handler);
 					this.current_file_item.file_reference.addEventListener(HTTPStatusEvent.HTTP_STATUS, this.HTTPError_Handler);
-					this.current_file_item.file_reference.addEventListener(DataEvent.UPLOAD_COMPLETE_DATA, this.ServerData_Handler);
+					this.current_file_item.file_reference.addEventListener(Event.COMPLETE, this.ServerData_Handler);
 					
 					// Get the request (post values, etc)
 					var request:URLRequest = this.BuildRequest();
@@ -1009,7 +1009,7 @@ package {
 				file_item.file_reference.removeEventListener(IOErrorEvent.IO_ERROR, this.IOError_Handler);
 				file_item.file_reference.removeEventListener(SecurityErrorEvent.SECURITY_ERROR, this.SecurityError_Handler);
 				file_item.file_reference.removeEventListener(HTTPStatusEvent.HTTP_STATUS, this.HTTPError_Handler);
-				file_item.file_reference.removeEventListener(DataEvent.UPLOAD_COMPLETE_DATA, this.ServerData_Handler);
+				file_item.file_reference.removeEventListener(Event.COMPLETE, this.ServerData_Handler);
 			}
 		}
 
