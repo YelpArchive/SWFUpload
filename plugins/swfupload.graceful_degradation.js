@@ -39,11 +39,37 @@ if (typeof(SWFUpload) === "function") {
 		};
 	})(SWFUpload.prototype.initSettings);
 
+	SWFUpload.prototype.loadFlash = function () {
+		var placeholder = document.getElementById(this.settings.button_placeholder_id);
+		if (placeholder != undefined) {
+			this.appendFlash();
+		}
+	};
+
+	SWFUpload.prototype.ranSwfUploadLoadedHandler = false;
 	SWFUpload.gracefulDegradation.swfUploadLoadedHandler = function () {
 		var swfuploadContainerID, swfuploadContainer, degradedContainerID, degradedContainer;
+		
+		// In some browsers when the movie is moved it is re-executed and events are called twice
+		if (this.ranSwfUploadLoadedHandler) {
+			return;
+		}
+		
+		this.ranSwfUploadLoadedHandler = true;
 
 		swfuploadContainerID = this.settings.swfupload_element_id;
 		degradedContainerID = this.settings.degraded_element_id;
+		
+		// Move the flash to where it belongs
+		var targetElement = document.getElementById(this.settings.button_placeholder_id);
+
+		if (targetElement == undefined) {
+			throw "Could not find the placeholder element.";
+		}
+		
+		var movie = this.getMovieElement();
+		movie.parentNode.removeChild(movie);
+		targetElement.parentNode.replaceChild(movie, targetElement);
 		
 		// Show the UI container
 		swfuploadContainer = document.getElementById(swfuploadContainerID);
