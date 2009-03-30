@@ -1,5 +1,13 @@
  * SWFUpload Core, January 2009, www.swfupload.org, swfupload.googlecode.com
 
+ * --------- Version 2.2.1-----------
+ * + Added requeueUpload and updated documentation
+ * + Added button_action type of JAVASCRIPT and a buttonAction event to trigger a JavaScript function when the Flash Button is clicked
+
+ * --------- Version 2.2.0.1-----------
+ * - Removed requeueUpload due to bugs/poor testing
+ * = Fixed namespace conflict that broke stopUpload
+
  * --------- Version 2.2.0-----------
  * + Added button_placeholder setting that accepts a DOM element.
  * + Added ability to requeue any file (including some improvement to internal queue state tracking)

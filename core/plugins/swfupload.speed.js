@@ -29,13 +29,13 @@ if (typeof(SWFUpload) === "function") {
 	SWFUpload.speed = {};
 	
 	SWFUpload.prototype.initSettings = (function (oldInitSettings) {
-		return function () {
+		return function (userSettings) {
 			if (typeof(oldInitSettings) === "function") {
-				oldInitSettings.call(this);
+				oldInitSettings.call(this, userSettings);
 			}
 			
 			this.ensureDefault = function (settingName, defaultValue) {
-				this.settings[settingName] = (this.settings[settingName] == undefined) ? defaultValue : this.settings[settingName];
+				this.settings[settingName] = (userSettings[settingName] == undefined) ? defaultValue : userSettings[settingName];
 			};
 
 			// List used to keep the speed stats for the files we are tracking

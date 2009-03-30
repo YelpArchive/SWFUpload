@@ -124,6 +124,7 @@ var FeaturesDemo = {
 		FeaturesDemo.rbButtonActionSelectFile = document.getElementById("rbButtonActionSelectFile");
 		FeaturesDemo.rbButtonActionSelectFiles = document.getElementById("rbButtonActionSelectFiles");
 		FeaturesDemo.rbButtonActionStartUpload = document.getElementById("rbButtonActionStartUpload");
+		FeaturesDemo.rbButtonActionJavaScript = document.getElementById("rbButtonActionJavaScript");
 		FeaturesDemo.txtButtonImageUrl = document.getElementById("txtButtonImageUrl");
 		FeaturesDemo.txtButtonText = document.getElementById("txtButtonText");
 		FeaturesDemo.txtButtonWidth = document.getElementById("txtButtonWidth");
@@ -166,6 +167,7 @@ var FeaturesDemo = {
 		FeaturesDemo.rbButtonActionSelectFile.checked = false;
 		FeaturesDemo.rbButtonActionSelectFiles.checked = false;
 		FeaturesDemo.rbButtonActionStartUpload.checked = false;
+		FeaturesDemo.rbButtonActionJavaScript.checked = false;
 		FeaturesDemo.txtButtonImageUrl.value = "";
 		FeaturesDemo.txtButtonText.value = "";
 		FeaturesDemo.txtButtonWidth.value = "";
@@ -191,6 +193,9 @@ var FeaturesDemo = {
 			break;
 		case SWFUpload.BUTTON_ACTION.START_UPLOAD:
 			FeaturesDemo.rbButtonActionStartUpload.checked = true;
+			break;
+		case SWFUpload.BUTTON_ACTION.JAVASCRIPT:
+			FeaturesDemo.rbButtonActionJavaScript.checked = true;
 			break;
 		case SWFUpload.BUTTON_ACTION.SELECT_FILES:
 		default:
@@ -346,6 +351,9 @@ var FeaturesDemo = {
 			break;
 		case FeaturesDemo.rbButtonActionStartUpload.checked:
 			FeaturesDemo.SU.setButtonAction(SWFUpload.BUTTON_ACTION.START_UPLOAD);
+			break;
+		case FeaturesDemo.rbButtonActionJavaScript.checked:
+			FeaturesDemo.SU.setButtonAction(SWFUpload.BUTTON_ACTION.JAVASCRIPT);
 			break;
 		}
 		

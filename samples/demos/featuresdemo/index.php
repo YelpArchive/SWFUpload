@@ -45,6 +45,7 @@
 				
 				// Event Handler Settings
 				swfupload_loaded_handler : FeaturesDemoHandlers.swfUploadLoaded,
+				button_action_handler : FeaturesDemoHandlers.buttonAction,
 				file_dialog_start_handler : FeaturesDemoHandlers.fileDialogStart,
 				file_queued_handler : FeaturesDemoHandlers.fileQueued,
 				file_queue_error_handler : FeaturesDemoHandlers.fileQueueError,
@@ -283,6 +284,7 @@
 										<input id="rbButtonActionSelectFile" type="radio" name="button_action" /> <label for="rbButtonActionSelectFile" style="display: inline;">Select File</label><br />
 										<input id="rbButtonActionSelectFiles" type="radio" name="button_action" /> <label for="rbButtonActionSelectFiles" style="display: inline;">Select Files</label><br />
 										<input id="rbButtonActionStartUpload" type="radio" name="button_action" /> <label for="rbButtonActionStartUpload" style="display: inline;">Start Upload</label><br />
+										<input id="rbButtonActionJavaScript" type="radio" name="button_action" /> <label for="rbButtonActionJavaScript" style="display: inline;">JavaScript</label><br />
 										</div>
 									</div>
 									<div class="checkbox">

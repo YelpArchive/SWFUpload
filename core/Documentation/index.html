@@ -77,7 +77,7 @@
 </style>
 
 <body>
-	<h1>SWFUpload v2.2.0 Documentation</h1>
+	<h1>SWFUpload v2.2.1 Documentation</h1>
 	<h2>TOC</h2>
 	<ol>
 		<li><a href="#swfupload">SWFUpload</a></li>
@@ -148,6 +148,7 @@
 					<ol>
 						<li><a href="#flashReady">flashReady</a></li>
 						<li><a href="#swfUploadLoaded">swfUploadLoaded</a></li>
+						<li><a href="#buttonAction">buttonAction</a></li>
 						<li><a href="#fileDialogStart">fileDialogStart</a></li>
 						<li><a href="#fileQueued">fileQueued</a></li>
 						<li><a href="#fileQueueError">fileQueueError</a></li>
@@ -431,7 +432,8 @@ var swfu = new SWFUpload({
 	<ul style="padding-left: 15px;">
 		<li>SELECT_FILE - when the Flash button is clicked the file dialog will only allow a single file to be selected.</li>
 		<li>SELECT_FILES - when the Flash button is clicked the file dialog allows multiple files to be selected.</li>
-		<li>START_UPLOAD - while the Flash button is clicked the first queued file will be uploaded.</li>
+		<li>START_UPLOAD - when the Flash button is clicked the first queued file will be uploaded.</li>
+		<li>JAVASCRIPT - when the Flash button is clicked the buttonAction event will be fired.</li>
 	</ul>
 
 	<h4><a name="button_cursor"></a>SWFUpload.CURSOR</h4>
@@ -552,6 +554,10 @@ function uploadSuccess(file, serverData, receivedResponse) {
 
 	<p>requeueUpload requeues any previously queued file.</p>
 	<p>If the file cannot be found or is currently uploading false is returned.</p>
+	<p>
+		Requeued files are not checked against the file size, queue size, file upload limit or any other settings but are simply added to the queue if a valid
+		reference to a file exists.
+	</p>
 	
 	<h4><a name="getStats"></a>object getStats()</h4>
 	<p>Retrieves the stats object.</p>
@@ -665,6 +671,9 @@ function uploadSuccess(file, serverData, receivedResponse) {
 	
 	<h4><a name="swfUploadLoaded"></a><span class="function">swfUploadLoaded()</span></h4>
 	<p>The swfUploadLoaded event is fired by flashReady.  It is settable.  swfUploadLoaded is called to let you know that it is safe to call SWFUpload methods.</p>
+	
+	<h4><a name="buttonAction"></a><span class="function">buttonAction()</span></h4>
+	<p>buttonAction is fired when the button_action setting is set to SWFUpload.BUTTON_ACTION.JAVASCRIPT and the button is clicked. Analogous to an button's onClick event.  This event is not fired for other button_action setings.</p>
 	
 	<h4><a name="fileDialogStart"></a><span class="function">fileDialogStart(<span class="parameter"></span>)</span></h4>
 	<p>fileDialogStart is fired after selectFile for selectFiles is called. This event is fired immediately before the File Selection Dialog

@@ -2,6 +2,11 @@ var FeaturesDemoHandlers = {
 	swfUploadLoaded : function () {
 		FeaturesDemo.start(this);  // This refers to the SWFObject because SWFUpload calls this with .apply(this).
 	},
+	
+	buttonAction : function () {
+		alert("Thank you for clicking the button!");
+	},
+	
 	fileDialogStart : function () {
 		try {
 			FeaturesDemo.selEventsQueue.options[FeaturesDemo.selEventsQueue.options.length] = new Option("File Dialog Start", "");

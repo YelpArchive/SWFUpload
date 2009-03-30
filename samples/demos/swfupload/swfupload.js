@@ -23,10 +23,10 @@ if (SWFUpload == undefined) {
 	};
 }
 
-SWFUpload.prototype.initSWFUpload = function (settings) {
+SWFUpload.prototype.initSWFUpload = function (userSettings) {
 	try {
 		this.customSettings = {};	// A container where developers can place their own settings associated with this instance.
-		this.settings = settings;
+		this.settings = {};
 		this.eventQueue = [];
 		this.movieName = "SWFUpload_" + SWFUpload.movieCount++;
 		this.movieElement = null;
@@ -36,7 +36,7 @@ SWFUpload.prototype.initSWFUpload = function (settings) {
 		SWFUpload.instances[this.movieName] = this;
 
 		// Load the settings.  Load the Flash movie.
-		this.initSettings();
+		this.initSettings(userSettings);
 		this.loadFlash();
 		this.displayDebugInfo();
 	} catch (ex) {
@@ -50,7 +50,7 @@ SWFUpload.prototype.initSWFUpload = function (settings) {
 /* *************** */
 SWFUpload.instances = {};
 SWFUpload.movieCount = 0;
-SWFUpload.version = "2.2.0 2009-03-25";
+SWFUpload.version = "2.2.1 2009-03-30";
 SWFUpload.QUEUE_ERROR = {
 	QUEUE_LIMIT_EXCEEDED	  		: -100,
 	FILE_EXCEEDS_SIZE_LIMIT  		: -110,
@@ -79,7 +79,8 @@ SWFUpload.FILE_STATUS = {
 SWFUpload.BUTTON_ACTION = {
 	SELECT_FILE  : -100,
 	SELECT_FILES : -110,
-	START_UPLOAD : -120
+	START_UPLOAD : -120,
+	JAVASCRIPT   : -130
 };
 SWFUpload.CURSOR = {
 	ARROW : -1,
@@ -94,11 +95,9 @@ SWFUpload.WINDOW_MODE = {
 // Private: takes a URL, determines if it is relative and converts to an absolute URL
 // using the current site. Only processes the URL if it can, otherwise returns the URL untouched
 SWFUpload.completeURL = function(url) {
-	if (typeof(url) !== "string" || url.match(/^https?:\/\//i) || url.match(/^\//)) {
+	if (typeof(url) !== "string" || url.match(/^https?:\/\//i) || url.match(/^\//) || url === "") {
 		return url;
 	}
-	
-	var currentURL = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ":" + window.location.port : "");
 	
 	var indexSlash = window.location.pathname.lastIndexOf("/");
 	if (indexSlash <= 0) {
@@ -107,7 +106,7 @@ SWFUpload.completeURL = function(url) {
 		path = window.location.pathname.substr(0, indexSlash) + "/";
 	}
 	
-	return /*currentURL +*/ path + url;
+	return path + url;
 	
 };
 
@@ -118,9 +117,9 @@ SWFUpload.completeURL = function(url) {
 
 // Private: initSettings ensures that all the
 // settings are set, getting a default value if one was not assigned.
-SWFUpload.prototype.initSettings = function () {
+SWFUpload.prototype.initSettings = function (userSettings) {
 	this.ensureDefault = function (settingName, defaultValue) {
-		this.settings[settingName] = (this.settings[settingName] == undefined) ? defaultValue : this.settings[settingName];
+		this.settings[settingName] = (userSettings[settingName] == undefined) ? defaultValue : userSettings[settingName];
 	};
 	
 	// Upload backend settings
@@ -177,6 +176,8 @@ SWFUpload.prototype.initSettings = function () {
 	this.ensureDefault("upload_success_handler", null);
 	this.ensureDefault("upload_complete_handler", null);
 	
+	this.ensureDefault("button_action_handler", null);
+	
 	this.ensureDefault("debug_handler", this.debugMessage);
 
 	this.ensureDefault("custom_settings", {});
@@ -190,7 +191,6 @@ SWFUpload.prototype.initSettings = function () {
 	}
 	
 	if (!this.settings.preserve_relative_urls) {
-		//this.settings.flash_url = SWFUpload.completeURL(this.settings.flash_url);	// Don't need to do this one since flash doesn't look at it
 		this.settings.upload_url = SWFUpload.completeURL(this.settings.upload_url);
 		this.settings.button_image_url = SWFUpload.completeURL(this.settings.button_image_url);
 	}
@@ -506,9 +506,11 @@ SWFUpload.prototype.stopUpload = function () {
 	this.callFlash("StopUpload");
 };
 
+
 // Public: requeueUpload requeues any file. If the file is requeued or already queued true is returned.
-// If the file is not found or is currently uploading false is returned
-SWFUpload.prototype.stopUpload = function (indexOrFileID) {
+// If the file is not found or is currently uploading false is returned.  Requeuing a file bypasses the
+// file size, queue size, upload limit and other queue checks.  Certain files can't be requeued (e.g, invalid or zero bytes files).
+SWFUpload.prototype.requeueUpload = function (indexOrFileID) {
 	return this.callFlash("RequeueUpload", [indexOrFileID]);
 };
 
@@ -838,6 +840,10 @@ SWFUpload.prototype.cleanUp = function (movieElement) {
 
 };
 
+/* When the button_action is set to JavaScript this event gets fired and executes the button_action_handler */
+SWFUpload.prototype.buttonAction = function () {
+	this.queueEvent("button_action_handler");
+};
 
 /* This is a chance to do something before the browse window opens */
 SWFUpload.prototype.fileDialogStart = function () {

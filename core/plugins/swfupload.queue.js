@@ -16,9 +16,9 @@ if (typeof(SWFUpload) === "function") {
 	SWFUpload.queue = {};
 	
 	SWFUpload.prototype.initSettings = (function (oldInitSettings) {
-		return function () {
+		return function (userSettings) {
 			if (typeof(oldInitSettings) === "function") {
-				oldInitSettings.call(this);
+				oldInitSettings.call(this, userSettings);
 			}
 			
 			this.queueSettings = {};
