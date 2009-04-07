@@ -20,8 +20,8 @@
 				file_size_limit : "10 MB",
 				file_types : "*.*",			// or you could use something like: "*.doc;*.wpd;*.pdf",
 				file_types_description : "All Files",
-				file_upload_limit : "0",
-				file_queue_limit : "1",
+				file_upload_limit : 0,
+				file_queue_limit : 1,
 
 				// Event handler settings
 				swfupload_loaded_handler : swfUploadLoaded,

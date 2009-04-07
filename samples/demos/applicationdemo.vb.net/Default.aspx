@@ -22,7 +22,7 @@
 				file_size_limit : "2 MB",
 				file_types : "*.jpg",
 				file_types_description : "JPG Images",
-				file_upload_limit : "0",    // Zero means unlimited
+				file_upload_limit : 0,    // Zero means unlimited
 
 				// Event Handler Settings - these functions as defined in Handlers.js
 				//  The handlers are not part of SWFUpload but are part of my website and control how

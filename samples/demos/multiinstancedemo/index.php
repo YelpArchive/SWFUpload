@@ -30,8 +30,8 @@
 				file_size_limit : "102400",	// 100MB
 				file_types : "*.*",
 				file_types_description : "All Files",
-				file_upload_limit : "10",
-				file_queue_limit : "0",
+				file_upload_limit : 10,
+				file_queue_limit : 0,
 
 				// Event Handler Settings (all my handlers are in the Handler.js file)
 				file_dialog_start_handler : fileDialogStart,

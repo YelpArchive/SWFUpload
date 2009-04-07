@@ -31,7 +31,7 @@
 				file_size_limit : "100 MB",
 				file_types : "*.*",
 				file_types_description : "All Files",
-				file_upload_limit : "10",
+				file_upload_limit : 10,
 
 				button_image_url : "images/button_270x22.png",
 				button_width : 270,
