@@ -94,7 +94,8 @@ SWFUpload.WINDOW_MODE = {
 
 // Private: takes a URL, determines if it is relative and converts to an absolute URL
 // using the current site. Only processes the URL if it can, otherwise returns the URL untouched
-SWFUpload.completeURL = function(url) {
+SWFUpload.completeURL = function (url) {
+	var path = "";
 	if (typeof(url) !== "string" || url.match(/^https?:\/\//i) || url.match(/^\//) || url === "") {
 		return url;
 	}

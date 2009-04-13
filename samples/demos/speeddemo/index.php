@@ -23,8 +23,8 @@
 
 	</style>
 	<script type="text/javascript" src="../swfupload/swfupload.js"></script>
-	<script type="text/javascript" src="js/swfupload.queue.js"></script>
-	<script type="text/javascript" src="js/swfupload.speed.js"></script>
+	<script type="text/javascript" src="../swfupload/swfupload.queue.js"></script>
+	<script type="text/javascript" src="../swfupload/swfupload.speed.js"></script>
 	<script type="text/javascript" src="js/handlers.js"></script>
 	<script type="text/javascript">
 		var swfu;
