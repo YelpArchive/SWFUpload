@@ -414,6 +414,13 @@ package {
 			}
 		}
 		
+		private function StopExternalInterfaceCheck():void {
+			if (this.restoreExtIntTimer) {
+				this.restoreExtIntTimer.start();
+				this.restoreExtIntTimer = null;
+			}
+		}
+		
 		// Called by JS to see if it can access the external interface
 		private function TestExternalInterface():Boolean {
 			return true;
@@ -460,6 +467,7 @@ package {
 				ExternalInterface.addCallback("SetButtonCursor", this.SetButtonCursor);
 
 				ExternalInterface.addCallback("TestExternalInterface", this.TestExternalInterface);
+				ExternalInterface.addCallback("StopExternalInterfaceCheck", this.StopExternalInterfaceCheck);
 				
 			} catch (ex:Error) {
 				this.Debug("Callbacks where not set: " + ex.message);

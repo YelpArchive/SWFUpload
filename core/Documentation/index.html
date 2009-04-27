@@ -671,25 +671,31 @@ function uploadSuccess(file, serverData, receivedResponse) {
 	
 	<h4><a name="swfUploadLoaded"></a><span class="function">swfUploadLoaded()</span></h4>
 	<p>The swfUploadLoaded event is fired by flashReady.  It is settable.  swfUploadLoaded is called to let you know that it is safe to call SWFUpload methods.</p>
+	<p>Set using the swfupload_loaded_handler setting.</p>
 	
 	<h4><a name="buttonAction"></a><span class="function">buttonAction()</span></h4>
-	<p>buttonAction is fired when the button_action setting is set to SWFUpload.BUTTON_ACTION.JAVASCRIPT and the button is clicked. Analogous to an button's onClick event.  This event is not fired for other button_action setings.</p>
+	<p>buttonAction is fired when the button_action setting is set to SWFUpload.BUTTON_ACTION.JAVASCRIPT and the button is clicked. Analogous to a button's onClick event.  This event is not fired for other button_action settings.</p>
+	<p>Set using the button_action_handler setting.</p>
 	
 	<h4><a name="fileDialogStart"></a><span class="function">fileDialogStart(<span class="parameter"></span>)</span></h4>
 	<p>fileDialogStart is fired after selectFile for selectFiles is called. This event is fired immediately before the File Selection Dialog
 	window is displayed. However, the event may not execute until after the Dialog window is closed.</p>
+	<p>Set using the file_dialog_start_handler setting.</p>
 	
 	<h4><a name="fileQueued"></a><span class="function">fileQueued(<span class="parameter">file object</span>)</span></h4>
 	<p>The fileQueued event is fired for each file that is queued after the File Selection Dialog window is closed.</p>
+	<p>Set using the file_queued_handler setting.</p>
 	
 	<h4><a name="fileQueueError"></a><span class="function">fileQueueError(<span class="parameter">file object</span>, <span class="parameter">error code</span>, <span class="parameter">message</span>)</span></h4>
 	<p>The fileQueueError event is fired for each file that was not queued after the File Selection Dialog window is closed.  A file may not be queued
 	for several reasons such as, the file exceeds the file size, the file is empty or a file or queue limit has been exceeded.</p>
-	<p>The reason for the queue error is specified by the error code parameter.  The error code corresponds to a SWFUpload.QUEUE_ERROR constant.</p>
+	<p>The cause of the queue error is specified by the error code parameter.  The error code corresponds to a SWFUpload.QUEUE_ERROR constant.</p>
+	<p>Set using the file_queue_error_handler setting.</p>
 	
 	<h4><a name="fileDialogComplete"></a><span class="function">fileDialogComplete(<span class="parameter">number of files selected</span>, <span class="parameter">number of files queued</span>, <span class="parameter">total number of files in the queued</span>)</span></h4>
 	<p>The fileDialogComplete event fires after the File Selection Dialog window has been closed and all the selected files have been processed.  The 'number of files queued' argument indicates the number of files that were queued from the dialog selection (as opposed to the number of files in the queue).</p>
 	<p>If you want file uploading to begin automatically this is a good place to call 'this.startUpload()'</p>
+	<p>Set using the file_dialog_complete_handler setting.</p>
 	
 	<h4><a name="uploadStart"></a><span class="function">uploadStart(<span class="parameter">file object</span>)</span></h4>
 	<p>uploadStart is called immediately before the file is uploaded.  This event provides an opportunity to perform any last minute validation, add post
@@ -697,17 +703,21 @@ function uploadSuccess(file, serverData, receivedResponse) {
 	
 	<p>The upload can be cancelled by returning 'false' from uploadStart.  If you return 'true' or do not return any value then the upload proceeds.  Returning
 	'false' will cause an uploadError event to fired.</p>
+
+	<p>Set using the upload_start_handler setting.</p>
 	
 	<h4><a name="uploadProgress"></a><span class="function">uploadProgress(<span class="parameter">file object</span>, <span class="parameter">bytes complete</span>, <span class="parameter">total bytes</span>)</span></h4>
 	<p>The uploadProgress event is fired periodically by the Flash Control.  This event is useful for providing UI updates on the page.</p>
 	<p><strong>Note:</strong> The Linux Flash Player fires a single uploadProgress event after the entire file has been uploaded.  This is a bug in
 	the Linux Flash Player that we cannot work around.</p>
+	<p>Set using the upload_progress_handler setting.</p>
 	
 	<h4><a name="uploadError"></a><span class="function">uploadError(<span class="parameter">file object</span>, <span class="parameter">error code</span>, <span class="parameter">message</span>)</span></h4>
 	<p>The uploadError event is fired any time an upload is interrupted or does not complete successfully.  The error code parameter indicates the type of error
 	that occurred. The error code parameter specifies a constant in SWFUpload.UPLOAD_ERROR.</p>
 	<p>Stopping, Cancelling or returning 'false' from uploadStart will cause uploadError to fire.  Upload error will not fire for files that are cancelled
 	but still waiting in the queue.</p>
+	<p>Set using the upload_error_handler setting.</p>
 	
 	<h4><a name="uploadSuccess"></a><span class="function">uploadSuccess(<span class="parameter">file object</span>, <span class="parameter">server data</span>, <span class="parameter">received response</span>)</span></h4>
 	<p>uploadSuccess is fired when the entire upload has been transmitted and the server returns a HTTP 200 status code.  Any data outputted by the server is available
@@ -723,16 +733,20 @@ function uploadSuccess(file, serverData, receivedResponse) {
 	</p>
 	
 	<p>At this point the upload is not yet complete.  Another upload cannot be started from uploadSuccess.</p>
+
+	<p>Set using the upload_success_handler setting.</p>
 	
 	<h4><a name="uploadComplete"></a><span class="function">uploadComplete(<span class="parameter">file object</span>)</span></h4>
 	<p>uploadComplete is always fired at the end of an upload cycle (after uploadError or uploadSuccess).  At this point the upload is complete and
 	another upload can be started.</p>
 	<p>If you want the next upload to start automatically this is a good place to call this.uploadStart().  Use caution when calling uploadStart inside
 	the uploadComplete event if you also have code that cancels all the uploads in a queue.</p>
+	<p>Set using the upload_complete_handler setting.</p>
 	
 	<h4><a name="debug"></a><span class="function">debug(<span class="parameter">message</span>)</span></h4>
 	<p>The debug event is called by the SWFUpload library and the Flash Control when the debug setting is set to 'true'.  If the debug
 	event is not overridden then SWFUpload writes debug messages to the SWFUpload console (a text box dynamically added to the end of the page body).</p>
+	<p>Set using the debug_handler setting.</p>
 	
 	<h3><a name="utility"></a>SWFUpload Utility Objects</h3>
 	<h4><a name="settingsobject"></a>Settings object</h4>
@@ -778,6 +792,7 @@ function uploadSuccess(file, serverData, receivedResponse) {
 	button_window_mode : SWFUpload.WINDOW_MODE.TRANSPARENT,
 	
 	swfupload_loaded_handler : swfupload_loaded_function,
+	button_action_handler : button_action_function,
 	file_dialog_start_handler : file_dialog_start_function,
 	file_queued_handler : file_queued_function,
 	file_queue_error_handler : file_queue_error_function,

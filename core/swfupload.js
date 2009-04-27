@@ -315,27 +315,19 @@ SWFUpload.prototype.destroy = function () {
 		// Make sure Flash is done before we try to remove it
 		this.cancelUpload(null, false);
 		
+		// Stop the external interface check from running
+		this.callFlash("StopExternalInterfaceCheck");
+		
+		var movieElement = this.cleanUp();
 
 		// Remove the SWFUpload DOM nodes
-		var movieElement = null;
-		movieElement = this.getMovieElement();
-		
-		if (movieElement && typeof(movieElement.CallFunction) === "unknown") { // We only want to do this in IE
-			// Loop through all the movie's properties and remove all function references (DOM/JS IE 6/7 memory leak workaround)
-			for (var i in movieElement) {
-				try {
-					if (typeof(movieElement[i]) === "function") {
-						movieElement[i] = null;
-					}
-				} catch (ex1) {}
-			}
-
+		if (movieElement) {
 			// Remove the Movie Element from the page
 			try {
 				movieElement.parentNode.removeChild(movieElement);
 			} catch (ex) {}
 		}
-		
+
 		// Remove IE form fix reference
 		window[this.movieName] = null;
 
@@ -802,17 +794,19 @@ SWFUpload.prototype.flashReady = function () {
 		return;
 	}
 
-	this.cleanUp(movieElement);
+	this.cleanUp();
 	
 	this.queueEvent("swfupload_loaded_handler");
 };
 
 // Private: removes Flash added fuctions to the DOM node to prevent memory leaks in IE.
 // This function is called by Flash each time the ExternalInterface functions are created.
-SWFUpload.prototype.cleanUp = function (movieElement) {
+SWFUpload.prototype.cleanUp = function () {
+	var movieElement = this.getMovieElement();
+	
 	// Pro-actively unhook all the Flash functions
 	try {
-		if (this.movieElement && typeof(movieElement.CallFunction) === "unknown") { // We only want to do this in IE
+		if (movieElement && typeof(movieElement.CallFunction) === "unknown") { // We only want to do this in IE
 			this.debug("Removing Flash functions hooks (this should only run in IE and should prevent memory leaks)");
 			for (var key in movieElement) {
 				try {
@@ -827,7 +821,7 @@ SWFUpload.prototype.cleanUp = function (movieElement) {
 	
 	}
 
-	// Fix Flashes own cleanup code so if the SWFMovie was removed from the page
+	// Fix Flashes own cleanup code so if the SWF Movie was removed from the page
 	// it doesn't display errors.
 	window["__flash__removeCallback"] = function (instance, name) {
 		try {
@@ -838,7 +832,8 @@ SWFUpload.prototype.cleanUp = function (movieElement) {
 		
 		}
 	};
-
+	
+	return movieElement;
 };
 
 /* When the button_action is set to JavaScript this event gets fired and executes the button_action_handler */
