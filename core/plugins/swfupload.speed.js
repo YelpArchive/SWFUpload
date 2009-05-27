@@ -3,9 +3,9 @@
 	
 	Features:
 		*Adds several properties to the 'file' object indicated upload speed, time left, upload time, etc.
-			- currentSpeed -- String indicating the upload speed, bytes per second
-			- averageSpeed -- Overall average upload speed, bytes per second
-			- movingAverageSpeed -- Speed over averaged over the last several measurements, bytes per second
+			- currentSpeed -- String indicating the upload speed, bits per second
+			- averageSpeed -- Overall average upload speed, bits per second
+			- movingAverageSpeed -- Speed over averaged over the last several measurements, bits per second
 			- timeRemaining -- Estimated remaining upload time in seconds
 			- timeElapsed -- Number of seconds passed for this upload
 			- percentUploaded -- Percentage of the file uploaded (0 to 100)

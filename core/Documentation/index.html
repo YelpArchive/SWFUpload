@@ -1114,6 +1114,9 @@ swfu.customSetting["a_dom_setting"].style.visibility = "hidden";</code>
 	<p>The Flash Player may not properly use proxies.  It does not handle authenticating proxies well (if at all) and will some-times crash.</p>
 	<p>Some anti-virus software uses a proxy to scan uploads and cause SWFUpload to believe the entire file has been uploaded.  SWFUpload will fire uploadProgress events very quickly
 	until it reaches 100% and will then seem to pause until the proxy completes uploading the file to the server.</p>
+	<p><strong>Kaspersky Anti-Virus:</strong> Kaspersky (and other) Anti-Virus suites implement a client-side proxy that intercepts and scans outgoing data.  SWFUpload
+	cannot detect the presence of proxy servers. These types of proxy servers accept the entire upload very quickly and they wait while the data is scanned and transmitted
+	to the original destination.  The Flash Player times out the connection (because of appearent inactivity) and returns a #2038 error. SWFUpload fires an uploadError event.</p>
 	
 	<h3>Apache mod_security</h3>
 	<p>Apache's mod_security validates POST to the server.  Flash Player has implemented an edge case (there is argument as to whether it is invalid or note)
@@ -1174,13 +1177,15 @@ swfu.customSetting["a_dom_setting"].style.visibility = "hidden";</code>
 	
 	<p>This behavior can adversely affect the SWFObject plugin.  No SWFUpload events will be fire and the button image will not be
 	loaded until the control becomes visible.</p>
+	
+	<p>On some systems (Linux is affected) when the WMODE is transparent Flash opens the File Dialog window behind the browser window.</p>
 
 	<h3>Memory Leaks</h3>
 	<p>Some browsers (especially IE) cannot recover memory used by the Flash Player when JavaScript communication via the ExternalInterface classes is used (like in SWFUpload). 
 	Creating many SWFUpload instances and/or reloading the page several times will cause the browser to consume more and more memory until it crashes or otherwise harms the
 	system.</p>
 	
-	<p>In v2.2.0 SWFUpload we gave implemented some preventative measures.  Some of these measures are pro-active but it is still recommended that you
+	<p>In v2.2.0 SWFUpload we have implemented some preventative measures.  Some of these measures are pro-active but it is still recommended that you
 	call the destroy method when the page unloads.  If you are using hundreds of SWFUpload instances on a page you should use caution and test
 	carefully for memory leaks.</p>
 	
@@ -1204,6 +1209,9 @@ swfu.customSetting["a_dom_setting"].style.visibility = "hidden";</code>
 		<li>
 			Users have reported that the Flash Player for Mac adds the PORT to the HTTP_HOST server variable (e.g., http://www.example.com:80). If you are
 			checking this variable in your server-side script be aware of the possible issue.
+		</li>
+		<li>
+			Files that contain only a resource fork are treated as zero byte file by the Flash Player and cannot be uploaded.	
 		</li>
 	</ul>
 	

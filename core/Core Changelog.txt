@@ -8,6 +8,7 @@
  * = Also fixed destroy method to call cleanUp method rather than duplicating the code
  * = Fixed scope issue in cleanUp method.
  * = Fixed bug in Queue Plugin that prevented the queueComplete event from firing
+ * + The place holder element is now replaced with the same type of flow element (div for block, span for inline)
  
 
  * --------- Version 2.2.0.1-----------
