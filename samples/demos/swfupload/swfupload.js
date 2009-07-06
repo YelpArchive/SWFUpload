@@ -95,20 +95,23 @@ SWFUpload.WINDOW_MODE = {
 // Private: takes a URL, determines if it is relative and converts to an absolute URL
 // using the current site. Only processes the URL if it can, otherwise returns the URL untouched
 SWFUpload.completeURL = function (url) {
-	var path = "";
-	if (typeof(url) !== "string" || url.match(/^https?:\/\//i) || url.match(/^\//) || url === "") {
+	try {
+		var path = "";
+		if (typeof(url) !== "string" || url.match(/^https?:\/\//i) || url.match(/^\//) || url === "") {
+			return url;
+		}
+		
+		var indexSlash = window.location.pathname.lastIndexOf("/");
+		if (indexSlash <= 0) {
+			path = "/";
+		} else {
+			path = window.location.pathname.substr(0, indexSlash) + "/";
+		}
+		
+		return path + url;
+	} catch (ex) {
 		return url;
 	}
-	
-	var indexSlash = window.location.pathname.lastIndexOf("/");
-	if (indexSlash <= 0) {
-		path = "/";
-	} else {
-		path = window.location.pathname.substr(0, indexSlash) + "/";
-	}
-	
-	return path + url;
-	
 };
 
 
@@ -120,7 +123,22 @@ SWFUpload.completeURL = function (url) {
 // settings are set, getting a default value if one was not assigned.
 SWFUpload.prototype.initSettings = function (userSettings) {
 	this.ensureDefault = function (settingName, defaultValue) {
-		this.settings[settingName] = (userSettings[settingName] == undefined) ? defaultValue : userSettings[settingName];
+		var setting = userSettings[settingName];
+		if (setting != undefined) {
+			if (typeof(setting) === "object" && !(setting instanceof Array)) {
+				var clone = {};
+				for (var key in setting) {
+					if (setting.hasOwnProperty(key)) {
+						clone[key] = setting[key];
+					}
+				}
+				this.settings[settingName] = clone;
+			} else {
+				this.settings[settingName] = setting;
+			}
+		} else {
+			this.settings[settingName] = defaultValue;
+		}
 	};
 	
 	// Upload backend settings
@@ -215,8 +233,10 @@ SWFUpload.prototype.loadFlash = function () {
 		throw "Could not find the placeholder element: " + this.settings.button_placeholder_id;
 	}
 
+	var wrapperType = (targetElement.currentStyle && targetElement.currentStyle["display"] || window.getComputedStyle && document.defaultView.getComputedStyle(targetElement, null).getPropertyValue("display")) !== "block" ? "span" : "div";
+	
 	// Append the container and load the flash
-	tempParent = document.createElement("div");
+	tempParent = document.createElement(wrapperType);
 	tempParent.innerHTML = this.getFlashHTML();	// Using innerHTML is non-standard but the only sensible way to dynamically add Flash in IE (and maybe other browsers)
 	targetElement.parentNode.replaceChild(tempParent.firstChild, targetElement);
 

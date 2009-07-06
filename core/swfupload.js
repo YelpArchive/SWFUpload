@@ -233,8 +233,7 @@ SWFUpload.prototype.loadFlash = function () {
 		throw "Could not find the placeholder element: " + this.settings.button_placeholder_id;
 	}
 
-	var wrapperType = ((targetElement.currentStyle && targetElement.currentStyle["display"]) ||
-					  ((window.getComputedStyle && document.defaultView.getComputedStyle(targetElement, null).getPropertyValue("display")) !== "block" ? "span" : "div";
+	var wrapperType = (targetElement.currentStyle && targetElement.currentStyle["display"] || window.getComputedStyle && document.defaultView.getComputedStyle(targetElement, null).getPropertyValue("display")) !== "block" ? "span" : "div";
 	
 	// Append the container and load the flash
 	tempParent = document.createElement(wrapperType);

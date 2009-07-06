@@ -1,5 +1,8 @@
  * SWFUpload Demos, January 2009, www.swfupload.org, swfupload.googlecode.com
 
+ * --------- Version 2.2.1 -----------
+ * = Removed reference to swfupload.swfobject.js plugin in Forms demo
+
  * --------- Version 2.2.0 -----------
  * = Updated for v2.2.0 features and other cosmetic changes
 
