@@ -78,7 +78,7 @@
 	} else {
 	?>
 	<form>
-		<div style="display: inline; border: solid 1px #7FAAFF; background-color: #C5D9FF; padding: 2px;">
+		<div style="width: 180px; height: 18px; border: solid 1px #7FAAFF; background-color: #C5D9FF; padding: 2px;">
 			<span id="spanButtonPlaceholder"></span>
 		</div>
 	</form>
