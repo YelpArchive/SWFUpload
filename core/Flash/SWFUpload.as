@@ -1,3 +1,8 @@
+/* Todo:
+* Missing initial progress event
+* Improve resizing/encoding so it doesn't lock up browser.
+* */
+
 package {
 	import flash.display.BlendMode;
 	import flash.display.DisplayObjectContainer;
@@ -9,6 +14,7 @@ package {
 	import flash.net.FileReferenceList;
 	import flash.net.FileReference;
 	import flash.net.FileFilter;
+	import flash.net.LocalConnection;
 	import flash.net.URLRequest;
 	import flash.net.URLRequestMethod;
 	import flash.net.URLVariables;
@@ -25,10 +31,14 @@ package {
 	import flash.text.TextFieldAutoSize;
 	import flash.text.TextFormat;
 	import flash.ui.Mouse;
+	import flash.utils.ByteArray;
 	import flash.utils.Timer;
 
 	import FileItem;
 	import ExternalCall;
+	import ImageResizer;
+	import ImageResizerEvent;
+	import MultipartURLLoader;
 
 	public class SWFUpload extends Sprite {
 		// Cause SWFUpload to start as soon as the movie starts
@@ -37,7 +47,8 @@ package {
 			var SWFUpload:SWFUpload = new SWFUpload();
 		}
 		
-		private const build_number:String = "SWFUPLOAD 2.2.1";
+
+		private const build_number:String = "SWFUPLOAD 2.5.0 Beta 1 - r.2";
 		
 		// State tracking variables
 		private var fileBrowserMany:FileReferenceList = new FileReferenceList();
@@ -96,7 +107,7 @@ package {
 		private var httpSuccess:Array = [];
 		private var assumeSuccessTimeout:Number = 0;
 		private var debugEnabled:Boolean;
-
+		
 		private var buttonLoader:Loader;
 		private var buttonTextField:TextField;
 		private var buttonCursorSprite:Sprite;
@@ -112,6 +123,8 @@ package {
 		private var buttonStateOver:Boolean;
 		private var buttonStateMouseDown:Boolean;
 		private var buttonStateDisabled:Boolean;
+		
+		private var usingPreview:Boolean;
 		
 		// Error code "constants"
 		// Size check constants
@@ -136,6 +149,7 @@ package {
 		private var ERROR_CODE_FILE_VALIDATION_FAILED:Number		= -270;
 		private var ERROR_CODE_FILE_CANCELLED:Number				= -280;
 		private var ERROR_CODE_UPLOAD_STOPPED:Number				= -290;
+		private var ERROR_CODE_RESIZE:Number						= -300;
 
 		
 		// Button Actions
@@ -146,6 +160,10 @@ package {
 		
 		private var BUTTON_CURSOR_ARROW:Number						= -1;
 		private var BUTTON_CURSOR_HAND:Number						= -2;
+		
+		// Resize encoder
+		private var ENCODER_JPEG:Number								= -1;
+		private var ENCODER_PNG:Number								= -2;
 		
 		public function SWFUpload() {
 			// Do the feature detection.  Make sure this version of Flash supports the features we need. If not
@@ -384,8 +402,17 @@ package {
 			} catch (ex:Object) {
 				this.SetButtonCursor(this.BUTTON_CURSOR_ARROW);
 			}
+
+			try {
+				this.usingPreview = Boolean(root.loaderInfo.parameters.usingPreview);
+			} catch (ex:Object) {
+				this.usingPreview = true;	// FIXME -- should be false
+			}
+			
 			
 			this.SetupExternalInterface();
+			
+			this.SetupPreview();
 			
 			this.Debug("SWFUpload Init Complete");
 			this.PrintDebugInfo();
@@ -435,7 +462,7 @@ package {
 				ExternalInterface.addCallback("StopUpload", this.StopUpload);
 				ExternalInterface.addCallback("CancelUpload", this.CancelUpload);
 				ExternalInterface.addCallback("RequeueUpload", this.RequeueUpload);
-				
+
 				ExternalInterface.addCallback("GetStats", this.GetStats);
 				ExternalInterface.addCallback("SetStats", this.SetStats);
 				ExternalInterface.addCallback("GetFile", this.GetFile);
@@ -711,7 +738,6 @@ package {
 			ExternalCall.FileDialogComplete(this.fileDialogComplete_Callback, file_reference_list.length, num_files_queued, this.queued_uploads);
 		}
 
-		
 		/* ****************************************************************
 			Externally exposed functions
 		****************************************************************** */
@@ -762,11 +788,19 @@ package {
 		private function StopUpload():void {
 			if (this.current_file_item != null) {
 				// Cancel the upload and re-queue the FileItem
-				this.current_file_item.file_reference.cancel();
+				if (this.current_file_item.upload_type === FileItem.UPLOAD_TYPE_NORMAL) {
+					this.current_file_item.file_reference.cancel();
+				} else {
+					if (this.current_file_item.resized_uploader != null) {
+						this.current_file_item.resized_uploader.cancel();
+						this.current_file_item.resized_uploader = null;
+					}
+				}
 
 				// Remove the event handlers
-				this.removeFileReferenceEventListeners(this.current_file_item);
+				this.removeEventListeners(this.current_file_item);
 
+				this.current_file_item.upload_type = FileItem.UPLOAD_TYPE_NORMAL;
 				this.current_file_item.file_status = FileItem.FILE_STATUS_QUEUED;
 				this.file_queue.unshift(this.current_file_item);
 				var js_object:Object = this.current_file_item.ToJavaScriptObject();
@@ -790,46 +824,61 @@ package {
 		 * */
 		private function CancelUpload(file_id:String, triggerErrorEvent:Boolean = true):void {
 			var file_item:FileItem = null;
-			
 			// Check the current file item
 			if (this.current_file_item != null && (this.current_file_item.id == file_id || !file_id)) {
+				if (this.current_file_item.upload_type === FileItem.UPLOAD_TYPE_NORMAL) {
 					this.current_file_item.file_reference.cancel();
-					this.current_file_item.file_status = FileItem.FILE_STATUS_CANCELLED;
+				} else {
+					if (this.current_file_item.resized_uploader != null) {
+						this.current_file_item.resized_uploader.cancel();
+						this.current_file_item.resized_uploader = null;
+					}
+				}
+				this.current_file_item.file_status = FileItem.FILE_STATUS_CANCELLED;
+				this.current_file_item.upload_type = FileItem.UPLOAD_TYPE_NORMAL;
+				this.upload_cancelled++;
+				
+				if (triggerErrorEvent) {
+					this.Debug("Event: uploadError: File ID: " + this.current_file_item.id + ". Cancelled current upload");
+					ExternalCall.UploadError(this.uploadError_Callback, this.ERROR_CODE_FILE_CANCELLED, this.current_file_item.ToJavaScriptObject(), "File Upload Cancelled.");
+				} else {
+					this.Debug("Event: cancelUpload: File ID: " + this.current_file_item.id + ". Cancelled current upload. Suppressed uploadError event.");
+				}
+				this.UploadComplete(false);
+			} else if (file_id) {
+				// Find the file in the queue
+				var file_index:Number = this.FindIndexInFileQueue(file_id);
+				if (file_index >= 0) {
+					// Remove the file from the queue
+					file_item = FileItem(this.file_queue[file_index]);
+					file_item.file_status = FileItem.FILE_STATUS_CANCELLED;
+					this.file_queue[file_index] = null;
+					this.queued_uploads--;
 					this.upload_cancelled++;
 					
-					if (triggerErrorEvent) {
-						this.Debug("Event: uploadError: File ID: " + this.current_file_item.id + ". Cancelled current upload");
-						ExternalCall.UploadError(this.uploadError_Callback, this.ERROR_CODE_FILE_CANCELLED, this.current_file_item.ToJavaScriptObject(), "File Upload Cancelled.");
-					} else {
-						this.Debug("Event: cancelUpload: File ID: " + this.current_file_item.id + ". Cancelled current upload. Suppressed uploadError event.");
-					}
-					this.UploadComplete(false);
-			} else if (file_id) {
-					// Find the file in the queue
-					var file_index:Number = this.FindIndexInFileQueue(file_id);
-					if (file_index >= 0) {
-						// Remove the file from the queue
-						file_item = FileItem(this.file_queue[file_index]);
-						file_item.file_status = FileItem.FILE_STATUS_CANCELLED;
-						this.file_queue[file_index] = null;
-						this.queued_uploads--;
-						this.upload_cancelled++;
-						
-						// Cancel the file (just for good measure) and make the callback
+					// Cancel the file (just for good measure) and make the callback
+					if (file_item.upload_type === FileItem.UPLOAD_TYPE_NORMAL) {
 						file_item.file_reference.cancel();
-						this.removeFileReferenceEventListeners(file_item);
-						//file_item.file_reference = null;
-						
-						if (triggerErrorEvent) {
-							this.Debug("Event: uploadError : " + file_item.id + ". Cancelled queued upload");
-							ExternalCall.UploadError(this.uploadError_Callback, this.ERROR_CODE_FILE_CANCELLED, file_item.ToJavaScriptObject(), "File Cancelled");
-						} else {
-							this.Debug("Event: cancelUpload: File ID: " + file_item.id + ". Cancelled current upload. Suppressed uploadError event.");
+					} else {
+						if (file_item.resized_uploader != null) {
+							file_item.resized_uploader.cancel();
+							file_item.resized_uploader = null;
 						}
-
-						// Get rid of the file object
-						file_item = null;
 					}
+					this.removeEventListeners(file_item);
+					file_item.upload_type = FileItem.UPLOAD_TYPE_NORMAL;
+
+					
+					if (triggerErrorEvent) {
+						this.Debug("Event: uploadError : " + file_item.id + ". Cancelled queued upload");
+						ExternalCall.UploadError(this.uploadError_Callback, this.ERROR_CODE_FILE_CANCELLED, file_item.ToJavaScriptObject(), "File Cancelled");
+					} else {
+						this.Debug("Event: cancelUpload: File ID: " + file_item.id + ". Cancelled current upload. Suppressed uploadError event.");
+					}
+
+					// Get rid of the file object
+					file_item = null;
+				}
 			} else {
 				// Get the first file and cancel it
 				while (this.file_queue.length > 0 && file_item == null) {
@@ -848,9 +897,17 @@ package {
 					
 
 					// Cancel the file (just for good measure) and make the callback
-					file_item.file_reference.cancel();
-					this.removeFileReferenceEventListeners(file_item);
-					//file_item.file_reference = null;
+					if (file_item.upload_type === FileItem.UPLOAD_TYPE_NORMAL) {
+						file_item.file_reference.cancel();
+					} else {
+						if (file_item.resized_uploader != null) {
+							file_item.resized_uploader.cancel();
+							file_item.resized_uploader = null;
+						}
+					}
+
+					this.removeEventListeners(file_item);
+					file_item.upload_type = FileItem.UPLOAD_TYPE_NORMAL;
 
 					if (triggerErrorEvent) {
 						this.Debug("Event: uploadError : " + file_item.id + ". Cancelled queued upload");
@@ -1190,7 +1247,8 @@ package {
 		/* *************************************************************
 			File processing and handling functions
 		*************************************************************** */
-		private function StartUpload(file_id:String = ""):void {
+		
+		private function StartUpload(file_id:String = "", resizeSettings:Object = null):void {
 			// Only upload a file uploads are being processed.
 			if (this.current_file_item != null) {
 				this.Debug("StartUpload(): Upload already in progress. Not starting another upload.");
@@ -1232,14 +1290,62 @@ package {
 				// Trigger the uploadStart event which will call ReturnUploadStart to begin the actual upload
 				this.Debug("Event: uploadStart : File ID: " + this.current_file_item.id);
 				
-				this.current_file_item.file_status = FileItem.FILE_STATUS_IN_PROGRESS;
-				ExternalCall.UploadStart(this.uploadStart_Callback, this.current_file_item.ToJavaScriptObject());
+					this.current_file_item.file_status = FileItem.FILE_STATUS_IN_PROGRESS;
+				if (resizeSettings != null) {
+					this.Debug("StartUpload(): Uploading Type: Resized Image.");
+					this.current_file_item.upload_type = FileItem.UPLOAD_TYPE_RESIZE;
+					this.PrepareResizedImage(resizeSettings);
+				} else {
+					this.Debug("StartUpload(): Upload Type: Normal.");
+					this.current_file_item.upload_type = FileItem.UPLOAD_TYPE_NORMAL;
+					ExternalCall.UploadStart(this.uploadStart_Callback, this.current_file_item.ToJavaScriptObject());
+				}
 			}
 			// Otherwise we've would have looped through all the FileItems. This means the queue is empty)
 			else {
 				this.Debug("StartUpload(): No files found in the queue.");
 			}
 		}
+		
+		private function PrepareResizedImage(resizeSettings:Object):void {
+			if (this.current_file_item == null) {
+				this.Debug("PrepareResizedImage called but no file was prepped for uploading. The file may have been cancelled or stopped.");
+				return;
+			}
+			
+			try {
+				var resizer:ImageResizer = new ImageResizer(this.current_file_item, resizeSettings["width"], resizeSettings["height"], resizeSettings["encoding"], resizeSettings["quality"]);
+				resizer.addEventListener(ImageResizerEvent.COMPLETE, this.PrepareResizedImageCompleteHandler);
+				resizer.addEventListener(ErrorEvent.ERROR, this.PrepareResizedImageErrorHandler);
+				
+				this.Debug("PrepareThumbnail(): Beginning image resizing.");
+				this.Debug("Settings: Width: " + resizeSettings["width"] + ", Height: " + resizeSettings["height"] + ", Encoding: " + (resizeSettings["encoding"] == this.ENCODER_PNG ? "PNG" : "JPEG") + ", Quality: " + resizeSettings["quality"] + ".");
+				resizer.ResizeImage();
+			
+			} catch (ex:Object) {
+				if (resizer != null) {
+					resizer.removeEventListener(ImageResizerEvent.COMPLETE, this.PrepareResizedImageCompleteHandler);
+					resizer.removeEventListener(ErrorEvent.ERROR, this.PrepareResizedImageErrorHandler);
+				}
+				ExternalCall.UploadError(this.uploadError_Callback, this.ERROR_CODE_RESIZE, this.current_file_item.ToJavaScriptObject(), "Error getting file for resize.");
+			}
+			
+		}
+		
+		private function PrepareResizedImageCompleteHandler(event:ImageResizerEvent):void {
+			this.Debug("PrepareResizedImageCompleteHandler(): Finished resizing. Initializing MultipartURLLoader.");
+			
+			if (this.current_file_item != null) {
+				var extension:String = event.encoding == this.ENCODER_PNG ? ".png" : ".jpg";
+				this.current_file_item.resized_uploader = new MultipartURLLoader(event.data, this.current_file_item.file_reference.name + extension);
+				ExternalCall.UploadStart(this.uploadStart_Callback, this.current_file_item.ToJavaScriptObject());
+			}
+		}		
+		private function PrepareResizedImageErrorHandler(event:ErrorEvent):void {
+			this.Debug("PrepareResizedImageErrorHandler(): Error resizing image: " + event.text);
+			this.CancelUpload(this.current_file_item.id, false);
+			ExternalCall.UploadError(this.uploadError_Callback, this.ERROR_CODE_RESIZE, this.current_file_item.ToJavaScriptObject(), "Error generating resized image. " + event.text);
+		}		
 
 		// This starts the upload when the user returns TRUE from the uploadStart event.  Rather than just have the value returned from
 		// the function we do a return function call so we can use the setTimeout work-around for Flash/JS circular calls.
@@ -1254,13 +1360,7 @@ package {
 			if (start_upload) {
 				try {
 					// Set the event handlers
-					this.current_file_item.file_reference.addEventListener(Event.OPEN, this.Open_Handler);
-					this.current_file_item.file_reference.addEventListener(ProgressEvent.PROGRESS, this.FileProgress_Handler);
-					this.current_file_item.file_reference.addEventListener(IOErrorEvent.IO_ERROR, this.IOError_Handler);
-					this.current_file_item.file_reference.addEventListener(SecurityErrorEvent.SECURITY_ERROR, this.SecurityError_Handler);
-					this.current_file_item.file_reference.addEventListener(HTTPStatusEvent.HTTP_STATUS, this.HTTPError_Handler);
-					this.current_file_item.file_reference.addEventListener(Event.COMPLETE, this.Complete_Handler);
-					this.current_file_item.file_reference.addEventListener(DataEvent.UPLOAD_COMPLETE_DATA, this.ServerData_Handler);
+					this.addEventListeners(this.current_file_item);
 					
 					// Get the request (post values, etc)
 					var request:URLRequest = this.BuildRequest();
@@ -1269,7 +1369,7 @@ package {
 						this.Debug("Event: uploadError : IO Error : File ID: " + this.current_file_item.id + ". Upload URL string is empty.");
 
 						// Remove the event handlers
-						this.removeFileReferenceEventListeners(this.current_file_item);
+						this.removeEventListeners(this.current_file_item);
 
 						this.current_file_item.file_status = FileItem.FILE_STATUS_QUEUED;
 						this.file_queue.unshift(this.current_file_item);
@@ -1280,7 +1380,12 @@ package {
 					} else {
 						this.Debug("ReturnUploadStart(): File accepted by startUpload event and readied for upload.  Starting upload to " + request.url + " for File ID: " + this.current_file_item.id);
 						this.current_file_item.file_status = FileItem.FILE_STATUS_IN_PROGRESS;
-						this.current_file_item.file_reference.upload(request, this.filePostName, false);
+						
+						if (this.current_file_item.upload_type === FileItem.UPLOAD_TYPE_NORMAL) {
+							this.current_file_item.file_reference.upload(request, this.filePostName, false);
+						} else {
+							this.current_file_item.resized_uploader.upload(request, this.filePostName);
+						}
 					}
 				} catch (ex:Error) {
 					this.Debug("ReturnUploadStart: Exception occurred: " + message);
@@ -1296,7 +1401,7 @@ package {
 				}
 			} else {
 				// Remove the event handlers
-				this.removeFileReferenceEventListeners(this.current_file_item);
+				this.removeEventListeners(this.current_file_item);
 
 				// Re-queue the FileItem
 				this.current_file_item.file_status = FileItem.FILE_STATUS_QUEUED;
@@ -1316,7 +1421,7 @@ package {
 		private function UploadComplete(eligible_for_requeue:Boolean):void {
 			var jsFileObj:Object = this.current_file_item.ToJavaScriptObject();
 			
-			this.removeFileReferenceEventListeners(this.current_file_item);
+			this.removeEventListeners(this.current_file_item);
 
 			if (!eligible_for_requeue || this.requeueOnError == false) {
 				//this.current_file_item.file_reference = null;
@@ -1332,7 +1437,47 @@ package {
 			ExternalCall.UploadComplete(this.uploadComplete_Callback, jsFileObj);
 		}
 
-
+		/* *****************************
+		 *  Preview Functions
+		 * ***************************** */
+		private function SetupPreview():void
+		{
+			if (!this.usingPreview) {
+				return;
+			}
+			
+			var requestImage:LocalConnection = new LocalConnection();
+			requestImage.client = this;
+			requestImage.connect(this.movieName);
+		}
+		
+		private var senderConnectionName:String = "";
+		private var senderFileID:String = "";
+		public function RequestImage(connectionName:String, file_id:String, width:int, height:int, encoder:int, quality:int):void {
+			var file:FileItem = FileItem(this.GetFile(file_id));
+			if (file == null) {
+				return;
+			}
+			
+			this.senderConnectionName = connectionName;
+			this.senderFileID = file_id;
+			
+			var resizer:ImageResizer = ImageResizer(file, width, height, encoder, quality);
+			resizer.addEventListener(ImageResizerEvent.COMPLETE);
+			resizer.ResizeImage();
+		}
+		private function RequestImageResizeComplete(e:ImageResizerEvent):void {
+			var sender:LocalConnection = new LocalConnection();
+			sender.send(this.senderConnectionName, "StartImageSend", this.senderFileID);
+			for (var i:Number = 0; i < e.data.length; i += 25000) {
+				var buffer:ByteArray = new ByteArray();
+				e.data.readBytes(buffer, i, 25000);
+				sender.send(this.senderConnectionName, "ReceiveImageChunk", this.senderFileID, buffer);
+			}
+			
+			sender.send(this.senderConnectionName, "EndImageSend", this.senderFileID);
+		}
+		
 		/* *************************************************************
 			Utility Functions
 		*************************************************************** */
@@ -1522,14 +1667,29 @@ package {
 			this.uploadPostObject = post_object;
 		}
 		
-		private function removeFileReferenceEventListeners(file_item:FileItem):void {
-			if (file_item != null && file_item.file_reference != null) {
-				file_item.file_reference.removeEventListener(Event.OPEN, this.Open_Handler);
-				file_item.file_reference.removeEventListener(ProgressEvent.PROGRESS, this.FileProgress_Handler);
-				file_item.file_reference.removeEventListener(IOErrorEvent.IO_ERROR, this.IOError_Handler);
-				file_item.file_reference.removeEventListener(SecurityErrorEvent.SECURITY_ERROR, this.SecurityError_Handler);
-				file_item.file_reference.removeEventListener(HTTPStatusEvent.HTTP_STATUS, this.HTTPError_Handler);
-				file_item.file_reference.removeEventListener(DataEvent.UPLOAD_COMPLETE_DATA, this.ServerData_Handler);
+		private function addEventListeners(fileItem:FileItem):void {
+			var item:EventDispatcher = fileItem.GetUploader();
+			if (item != null) {
+				item.addEventListener(Event.OPEN, this.Open_Handler);
+				item.addEventListener(ProgressEvent.PROGRESS, this.FileProgress_Handler);
+				item.addEventListener(IOErrorEvent.IO_ERROR, this.IOError_Handler);
+				item.addEventListener(SecurityErrorEvent.SECURITY_ERROR, this.SecurityError_Handler);
+				item.addEventListener(HTTPStatusEvent.HTTP_STATUS, this.HTTPError_Handler);
+				item.addEventListener(Event.COMPLETE, this.Complete_Handler);
+				item.addEventListener(DataEvent.UPLOAD_COMPLETE_DATA, this.ServerData_Handler);
+			}
+		}
+
+		private function removeEventListeners(fileItem:FileItem):void {
+			var item:EventDispatcher = fileItem.GetUploader();
+			if (item != null) {
+				item.removeEventListener(Event.OPEN, this.Open_Handler);
+				item.removeEventListener(ProgressEvent.PROGRESS, this.FileProgress_Handler);
+				item.removeEventListener(IOErrorEvent.IO_ERROR, this.IOError_Handler);
+				item.removeEventListener(SecurityErrorEvent.SECURITY_ERROR, this.SecurityError_Handler);
+				item.removeEventListener(HTTPStatusEvent.HTTP_STATUS, this.HTTPError_Handler);
+				item.removeEventListener(Event.COMPLETE, this.Complete_Handler);
+				item.removeEventListener(DataEvent.UPLOAD_COMPLETE_DATA, this.ServerData_Handler);
 			}
 		}
 

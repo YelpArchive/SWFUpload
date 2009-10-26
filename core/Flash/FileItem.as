@@ -1,4 +1,5 @@
 package {
+	import flash.events.EventDispatcher;
 	import flash.net.FileReference;
 
 	internal class FileItem
@@ -7,9 +8,11 @@ package {
 
 		private var postObject:Object;
 		public var file_reference:FileReference;
+		public var resized_uploader:MultipartURLLoader;
 		public var id:String;
 		public var index:Number = -1;
 		public var file_status:int = 0;
+		public var upload_type:int = 0;
 		private var js_object:Object;
 		
 		public static var FILE_STATUS_QUEUED:int		= -1;
@@ -18,18 +21,24 @@ package {
 		public static var FILE_STATUS_SUCCESS:int		= -4;
 		public static var FILE_STATUS_CANCELLED:int		= -5;
 		public static var FILE_STATUS_NEW:int			= -6;	// This file status should never be sent to JavaScript
+
+		public static var UPLOAD_TYPE_NORMAL:int		= -1;
+		public static var UPLOAD_TYPE_RESIZE:int		= -2;
 		
 		public function FileItem(file_reference:FileReference, control_id:String, index:Number)
 		{
 			this.postObject = {};
 			this.file_reference = file_reference;
+			this.resized_uploader = null;
 			this.id = control_id + "_" + (FileItem.file_id_sequence++);
 			this.file_status = FileItem.FILE_STATUS_NEW;
 			this.index = index;
 			
+			
 			this.js_object = {
 				id: this.id,
 				index: this.index,
+				uploadtype: this.upload_type,
 				post: this.GetPostObject()
 			};
 			
@@ -46,6 +55,10 @@ package {
 			}
 			
 			this.js_object.filestatus = this.file_status;
+		}
+		
+		public function GetUploader():EventDispatcher {
+			return upload_type === FileItem.UPLOAD_TYPE_NORMAL ? this.file_reference : this.resized_uploader;
 		}
 		
 		public function AddParam(name:String, value:String):void {

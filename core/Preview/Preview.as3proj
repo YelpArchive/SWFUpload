@@ -4,16 +4,16 @@
   <output>
     <movie disabled="False" />
     <movie input="" />
-    <movie path="swfupload.swf" />
-    <movie fps="15" />
-    <movie width="300" />
-    <movie height="300" />
+    <movie path="Preview.swf" />
+    <movie fps="1" />
+    <movie width="1" />
+    <movie height="1" />
     <movie version="10" />
     <movie background="#FFFFFF" />
   </output>
   <!-- Other classes to be compiled into your SWF -->
   <classpaths>
-    <class path="." />
+    <class path="..\Flash" />
   </classpaths>
   <!-- Build options -->
   <build>
@@ -22,7 +22,7 @@
     <option benchmark="False" />
     <option es="False" />
     <option loadConfig="" />
-    <option optimize="True" />
+    <option optimize="False" />
     <option showActionScriptWarnings="True" />
     <option showBindingWarnings="True" />
     <option showDeprecationWarnings="True" />
@@ -61,19 +61,19 @@
   </library>
   <!-- Class files to compile (other referenced classes will automatically be included) -->
   <compileTargets>
-    <compile path="SWFUpload.as" />
+    <compile path="Preview.as" />
   </compileTargets>
   <!-- Paths to exclude from the Project Explorer tree -->
   <hiddenPaths>
-    <hidden path="deploy.bat" />
+    <!-- example: <hidden path="..." /> -->
   </hiddenPaths>
   <!-- Executed before build -->
   <preBuildCommand />
   <!-- Executed after build -->
-  <postBuildCommand alwaysRun="True">deploy.bat</postBuildCommand>
+  <postBuildCommand alwaysRun="False" />
   <!-- Other project options -->
   <options>
     <option showHiddenPaths="False" />
-    <option testMovie="NewWindow" />
+    <option testMovie="ExternalPlayer" />
   </options>
 </project>

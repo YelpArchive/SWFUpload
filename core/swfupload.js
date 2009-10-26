@@ -67,7 +67,8 @@ SWFUpload.UPLOAD_ERROR = {
 	SPECIFIED_FILE_ID_NOT_FOUND		: -260,
 	FILE_VALIDATION_FAILED	  		: -270,
 	FILE_CANCELLED			  		: -280,
-	UPLOAD_STOPPED					: -290
+	UPLOAD_STOPPED					: -290,
+	RESIZE_ERROR					: -300
 };
 SWFUpload.FILE_STATUS = {
 	QUEUED		 : -1,
@@ -76,11 +77,16 @@ SWFUpload.FILE_STATUS = {
 	COMPLETE	 : -4,
 	CANCELLED	 : -5
 };
+SWFUpload.UPLOAD_TYPE = {
+	NORMAL		 : -1,
+	RESIZED		 : -2,
+};
+
 SWFUpload.BUTTON_ACTION = {
-	SELECT_FILE  : -100,
-	SELECT_FILES : -110,
-	START_UPLOAD : -120,
-	JAVASCRIPT   : -130
+	SELECT_FILE				: -100,
+	SELECT_FILES			: -110,
+	START_UPLOAD			: -120,
+	JAVASCRIPT				: -130
 };
 SWFUpload.CURSOR = {
 	ARROW : -1,
@@ -90,6 +96,11 @@ SWFUpload.WINDOW_MODE = {
 	WINDOW : "window",
 	TRANSPARENT : "transparent",
 	OPAQUE : "opaque"
+};
+
+SWFUpload.RESIZE_ENCODING = {
+	JPEG : -1,
+	PNG : -2
 };
 
 // Private: takes a URL, determines if it is relative and converts to an absolute URL
@@ -503,6 +514,12 @@ SWFUpload.prototype.startUpload = function (fileID) {
 	this.callFlash("StartUpload", [fileID]);
 };
 
+// Public: startUpload starts uploading the first file in the queue unless
+// the optional parameter 'fileID' specifies the ID 
+SWFUpload.prototype.startResizedUpload = function (fileID, width, height, encoding, quality) {
+	this.callFlash("StartUpload", [fileID, { "width": width, "height" : height, "encoding" : encoding, "quality" : quality }]);
+};
+
 // Public: cancelUpload cancels any queued file.  The fileID parameter may be the file ID or index.
 // If you do not specify a fileID the current uploading file or first file in the queue is cancelled.
 // If you do not want the uploadError event to trigger you can specify false for the triggerErrorEvent parameter.
@@ -717,6 +734,7 @@ SWFUpload.prototype.setButtonCursor = function (cursor) {
 	this.settings.button_cursor = cursor;
 	this.callFlash("SetButtonCursor", [cursor]);
 };
+
 
 /* *******************************
 	Flash Event Interfaces

@@ -1,5 +1,13 @@
  * SWFUpload Core, January 2009, www.swfupload.org, swfupload.googlecode.com
 
+ * --------- Version 2.5.0-----------
+ * + Added Client Side thumbnail generation and uploading
+ * + Added startThumbnailUpload()
+ * + Added thumbnail_width and thumbnail_height settings
+ * + Added setThumbnailDimensions(w, h) function
+ * + Added button_action type of START_THUMBNAIL_UPLOAD
+
+ 
  * --------- Version 2.2.1-----------
  * + Added requeueUpload and updated documentation
  * + Added button_action type of JAVASCRIPT and a buttonAction event to trigger a JavaScript function when the Flash Button is clicked

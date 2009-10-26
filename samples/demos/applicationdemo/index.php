@@ -18,9 +18,9 @@
 				post_params: {"PHPSESSID": "<?php echo session_id(); ?>"},
 
 				// File Upload Settings
-				file_size_limit : "2 MB",	// 2MB
-				file_types : "*.jpg",
-				file_types_description : "JPG Images",
+				file_size_limit : "10 MB",	// 2MB
+				file_types : "*.jpg;*.png",
+				file_types_description : "JPG Images; PNG Image",
 				file_upload_limit : 0,
 
 				// Event Handler Settings - these functions as defined in Handlers.js
